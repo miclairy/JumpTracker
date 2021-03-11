@@ -15,8 +15,7 @@ let id = 0;
 let children = [];
 let detections = [];
 let trackers = new Map();
-let prevBbox;
-let prevContext;
+let trackersMovementUp = new Map(); // id, total consectutive movement up
 
 // Before we can use COCO-SSD class we must wait for it to finish
 // loading. Machine Learning models can be large and take a moment
@@ -53,7 +52,7 @@ function enableCam(event) {
 		video.srcObject = stream;
 		var context = canvas.getContext("2d");
 		context.drawImage(video, 0, 0, 100, 100 / (4 / 3));
-		prevContext = canvas.getContext("2d");
+		// prevContext = canvas.getContext("2d");
 
 		video.addEventListener("loadeddata", predictWebcam);
 	});
@@ -142,7 +141,11 @@ function predictWebcam() {
 			// match bbox with the detections
 			// update trackers
 			associations.forEach(match => {
-				trackers.set(match[0], detections[match[1]]);
+				let newbbox = detections[match[1]];
+				if (newbbox) {
+					setMovingUp(newbbox, match);
+					trackers.set(match[0], detections[match[1]]);
+				}
 				detections[match[1]] = [];
 			});
 		});
@@ -156,12 +159,34 @@ function predictWebcam() {
 		});
 		
 
-		console.log('trackers', trackers);
+		for (const [trackId, movement] of trackersMovementUp) {
+			// console.log('pancake', trackId, movement)
+			if (movement < -10) {
+				console.log('JUMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+			}
+		}
+
+		// console.log('trackers', trackers);
 			
 		// Call this function again to keep predicting when the browser is ready.
 		window.requestAnimationFrame(predictWebcam);
 
 	});
+}
+
+function setMovingUp(newbbox, match) {
+	let old = trackers.get(match[0]);
+	let movedUp = newbbox[1] - old[1];
+	if (movedUp < 0) {
+		// console.log('moved up', movedUp);
+		if (trackersMovementUp.get(match[0])) {
+			trackersMovementUp.set(match[0], trackersMovementUp.get(match[0]) + movedUp);
+		} else {
+			trackersMovementUp.set(match[0], movedUp);
+		}
+	} else {
+		trackersMovementUp.set(match[0], 0);
+	}
 }
 
 function IoU(bboxA, bboxB) {
