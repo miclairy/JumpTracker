@@ -1,0 +1,27 @@
+{
+  "name": "tensorflowjstut",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "watch": "webpack --watch",
+    "start": "webpack serve --open"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^7.0.0",
+    "html-webpack-plugin": "^4.5.0",
+    "webpack": "^5.11.1",
+    "webpack-cli": "^4.3.0",
+    "webpack-dev-server": "^3.11.1"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "munkres-js": "^1.2.2",
+    "open": "^7.3.0"
+  }
+}
