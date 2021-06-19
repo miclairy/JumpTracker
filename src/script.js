@@ -58,7 +58,6 @@ function enableCam(event) {
 	});
 }
 
-let count = 0;
 function predictWebcam() {
 
 	detections = [];
@@ -115,41 +114,33 @@ function predictWebcam() {
 			}
 		}
 
-		let ioUMatrix = [[]];
-		let i = 0;
+		let ioUMatrix = [];
+		// let i = 0;
 		Array.from(trackers.keys()).forEach((id) => {
 			// dear alex says that for const of is superior but :p
 			// need to get the pixels from the video frame at the bbox
 
-			var context = canvas.getContext("2d");
-			context.drawImage(video, 0, 0, 100, 100 / (4 / 3));
-			// var frame = context.getImageData(x, y, width, height).data;
-
-			let prevBbox = trackers.get(id);
-			// let prevBboxFrame = prevContext.getImageData(...prevBbox);
-			let j = 0;
-			detections.forEach((bbox) => {
-				// let bboxFrame = context.getImageData(...bbox);
-				ioUMatrix[(i, j)] = IoU(bbox, prevBbox);
-				j++;
-			});
-			
-			i++;
-			
-			let associations = munkres([ioUMatrix]);
-
-			// match bbox with the detections
-			// update trackers
-			associations.forEach(match => {
-				let newbbox = detections[match[1]];
-				if (newbbox) {
-					setMovingUp(newbbox, match);
-					trackers.set(match[0], detections[match[1]]);
-				}
-				detections[match[1]] = [];
-			});
+			const prevBbox = trackers.get(id);
+			const bBoxSimilarities = detections.map((bbox) => IoU(bbox, prevBbox));
+			ioUMatrix.push(bBoxSimilarities);
 		});
-		
+
+		const associations = ioUMatrix.length > 0 ? munkres(ioUMatrix) : [];
+		console.log('associations', associations, ioUMatrix)
+
+		// match bbox with the detections
+		// update trackers
+		associations.forEach(match => {
+			let detectionsIndex = match[1];
+			let newbbox = detections[detectionsIndex];
+			if (newbbox) {
+				setMovingUp(newbbox, match);
+				trackers.set(match[0], newbbox);
+			}
+			detections.splice(match[1], 1, []);
+
+		});
+
 		// add new trackers
 		detections.forEach((bbox) => {
 			if (bbox.length === 4 ) {
@@ -167,7 +158,7 @@ function predictWebcam() {
 		}
 
 		// console.log('trackers', trackers);
-			
+
 		// Call this function again to keep predicting when the browser is ready.
 		window.requestAnimationFrame(predictWebcam);
 
@@ -178,7 +169,7 @@ function setMovingUp(newbbox, match) {
 	let old = trackers.get(match[0]);
 	let movedUp = newbbox[1] - old[1];
 	if (movedUp < 0) {
-		// console.log('moved up', movedUp);
+		console.log('moved up', movedUp);
 		if (trackersMovementUp.get(match[0])) {
 			trackersMovementUp.set(match[0], trackersMovementUp.get(match[0]) + movedUp);
 		} else {
