@@ -15,7 +15,8 @@ let id = 0;
 let children = [];
 let detections = [];
 let trackers = new Map();
-let trackersMovementUp = new Map(); // id, total consectutive movement up
+let consecutiveUpMovement = new Map(); // trackerId, total consectutive movement up
+const JUMP_THRESHOLD = -100;
 
 // Before we can use COCO-SSD class we must wait for it to finish
 // loading. Machine Learning models can be large and take a moment
@@ -126,18 +127,16 @@ function predictWebcam() {
 		});
 
 		const associations = ioUMatrix.length > 0 ? munkres(ioUMatrix) : [];
-		console.log('associations', associations, ioUMatrix)
 
 		// match bbox with the detections
 		// update trackers
-		associations.forEach(match => {
-			let detectionsIndex = match[1];
+		associations.forEach(([trackerIndex, detectionsIndex]) => {
 			let newbbox = detections[detectionsIndex];
 			if (newbbox) {
-				setMovingUp(newbbox, match);
-				trackers.set(match[0], newbbox);
+				setMovingUp(newbbox, trackerIndex);
+				trackers.set(trackerIndex, newbbox);
 			}
-			detections.splice(match[1], 1, []);
+			detections.splice(detectionsIndex, 1, []);
 
 		});
 
@@ -150,10 +149,11 @@ function predictWebcam() {
 		});
 		
 
-		for (const [trackId, movement] of trackersMovementUp) {
+		for (const [trackId, movement] of consecutiveUpMovement) {
 			// console.log('pancake', trackId, movement)
-			if (movement < -10) {
+			if (movement < JUMP_THRESHOLD) {
 				console.log('JUMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+				consecutiveUpMovement.set(trackId, 0);
 			}
 		}
 
@@ -165,18 +165,17 @@ function predictWebcam() {
 	});
 }
 
-function setMovingUp(newbbox, match) {
-	let old = trackers.get(match[0]);
+function setMovingUp(newbbox, trackerId) {
+	let old = trackers.get(trackerId);
 	let movedUp = newbbox[1] - old[1];
 	if (movedUp < 0) {
-		console.log('moved up', movedUp);
-		if (trackersMovementUp.get(match[0])) {
-			trackersMovementUp.set(match[0], trackersMovementUp.get(match[0]) + movedUp);
+		if (consecutiveUpMovement.get(trackerId)) {
+			consecutiveUpMovement.set(trackerId, consecutiveUpMovement.get(trackerId) + movedUp);
 		} else {
-			trackersMovementUp.set(match[0], movedUp);
+			consecutiveUpMovement.set(trackerId, movedUp);
 		}
 	} else {
-		trackersMovementUp.set(match[0], 0);
+		consecutiveUpMovement.set(trackerId, 0);
 	}
 }
 
