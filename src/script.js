@@ -149,14 +149,6 @@ function predictWebcam() {
 			}
 		});
 
-
-		for (const [trackId, jumping] of currentlyJumpingTrackers) {
-			// console.log('pancake', trackId, movement)
-			if (jumping) {
-				console.log(trackId, 'JUMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-			}
-		}
-
 		// console.log('trackers', trackers);
 
 		// Call this function again to keep predicting when the browser is ready.
@@ -172,17 +164,18 @@ function setMovingUp(newbbox, trackerId) {
 		if (consecutiveUpMovement.get(trackerId)) {
 			const totalMovement = consecutiveUpMovement.get(trackerId) + movement;
 			consecutiveUpMovement.set(trackerId, totalMovement);
-			if (totalMovement < JUMP_THRESHOLD) {
+			if (totalMovement < JUMP_THRESHOLD && !currentlyJumpingTrackers.get(trackerId)) {
+				console.log(trackerId, 'JUMP!!')
 				currentlyJumpingTrackers.set(trackerId, true);
 			}
 		} else {
 			consecutiveUpMovement.set(trackerId, movement);
 		}
 	} else {
-		// if (movement > 0) {
+		if (movement > 5) {
 			consecutiveUpMovement.set(trackerId, 0);
 		 	currentlyJumpingTrackers.set(trackerId, false);
-		// }
+		}
 	}
 }
 
