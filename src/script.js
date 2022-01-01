@@ -16,6 +16,7 @@ let children = [];
 let detections = [];
 let trackers = new Map();
 let consecutiveUpMovement = new Map(); // trackerId, total consectutive movement up
+let currentlyJumpingTrackers = new Map(); // trackerId , boolean if jumping
 const JUMP_THRESHOLD = -100;
 
 // Before we can use COCO-SSD class we must wait for it to finish
@@ -147,13 +148,12 @@ function predictWebcam() {
 				id += 1;
 			}
 		});
-		
 
-		for (const [trackId, movement] of consecutiveUpMovement) {
+
+		for (const [trackId, jumping] of currentlyJumpingTrackers) {
 			// console.log('pancake', trackId, movement)
-			if (movement < JUMP_THRESHOLD) {
-				console.log('JUMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-				consecutiveUpMovement.set(trackId, 0);
+			if (jumping) {
+				console.log(trackId, 'JUMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
 			}
 		}
 
@@ -167,15 +167,22 @@ function predictWebcam() {
 
 function setMovingUp(newbbox, trackerId) {
 	let old = trackers.get(trackerId);
-	let movedUp = newbbox[1] - old[1];
-	if (movedUp < 0) {
+	let movement = newbbox[1] - old[1];
+	if (movement < 0) { // < 0 going up
 		if (consecutiveUpMovement.get(trackerId)) {
-			consecutiveUpMovement.set(trackerId, consecutiveUpMovement.get(trackerId) + movedUp);
+			const totalMovement = consecutiveUpMovement.get(trackerId) + movement;
+			consecutiveUpMovement.set(trackerId, totalMovement);
+			if (totalMovement < JUMP_THRESHOLD) {
+				currentlyJumpingTrackers.set(trackerId, true);
+			}
 		} else {
-			consecutiveUpMovement.set(trackerId, movedUp);
+			consecutiveUpMovement.set(trackerId, movement);
 		}
 	} else {
-		consecutiveUpMovement.set(trackerId, 0);
+		// if (movement > 0) {
+			consecutiveUpMovement.set(trackerId, 0);
+		 	currentlyJumpingTrackers.set(trackerId, false);
+		// }
 	}
 }
 
@@ -185,14 +192,14 @@ function IoU(bboxA, bboxB) {
 	let yA = Math.max(bboxA[1], bboxB[1])
 	let xB = Math.min(bboxA[2], bboxB[2])
 	let yB = Math.min(bboxA[3], bboxB[3])
-	
+
 	let interArea = (xB - xA) * (yB - yA)
 
 	let iou = 0;
 	if (interArea > 0) {
 		let bboxAArea = (bboxA[2] - bboxA[0]) * (bboxA[3] - bboxA[1])
 		let bboxBArea = (bboxB[2] - bboxB[0]) * (bboxB[3] - bboxB[1])
-		
+
 		iou = interArea / (bboxAArea + bboxBArea - interArea);
 	}
 	return iou;
@@ -201,7 +208,7 @@ function IoU(bboxA, bboxB) {
 function matrixIntersection(image1, image2) {
 	// https://www.geeksforgeeks.org/find-the-intersection-of-two-matrices/
 	// https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
-	
+
 	// if (image1.width !== image2.width && image1.height !== image2.height) {
 	// 	alert('she be broke, we be sad widths:' +  image1.width + " " + image2.width + " heights:" +  image1.height + " " + image2.height);
 	// 	return;
