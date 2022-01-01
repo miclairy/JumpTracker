@@ -10,7 +10,7 @@ const demosSection = document.getElementById("demos");
 const enableWebcamButton = document.getElementById("webcamButton");
 
 let model = undefined;
-let id = 0;
+let MAXTRACKERID = 0;
 
 let children = [];
 let detections = [];
@@ -116,38 +116,7 @@ function predictWebcam() {
 			}
 		}
 
-		let ioUMatrix = [];
-		// let i = 0;
-		Array.from(trackers.keys()).forEach((id) => {
-			// dear alex says that for const of is superior but :p
-			// need to get the pixels from the video frame at the bbox
-
-			const prevBbox = trackers.get(id);
-			const bBoxSimilarities = detections.map((bbox) => IoU(bbox, prevBbox));
-			ioUMatrix.push(bBoxSimilarities);
-		});
-
-		const associations = ioUMatrix.length > 0 ? munkres(ioUMatrix) : [];
-
-		// match bbox with the detections
-		// update trackers
-		associations.forEach(([trackerIndex, detectionsIndex]) => {
-			let newbbox = detections[detectionsIndex];
-			if (newbbox) {
-				setMovingUp(newbbox, trackerIndex);
-				trackers.set(trackerIndex, newbbox);
-			}
-			detections.splice(detectionsIndex, 1, []);
-
-		});
-
-		// add new trackers
-		detections.forEach((bbox) => {
-			if (bbox.length === 4 ) {
-				trackers.set(id, bbox);
-				id += 1;
-			}
-		});
+		updateTrackersWithNewBoundingBoxes();
 
 		// console.log('trackers', trackers);
 
@@ -155,6 +124,51 @@ function predictWebcam() {
 		window.requestAnimationFrame(predictWebcam);
 
 	});
+}
+
+function updateTrackersWithNewBoundingBoxes() {
+	const ioUMatrix = [];
+
+	const trackerIdToIndex = Array.from(trackers.keys());
+
+	for (const prevBbox of trackers.values()) { // assumes that ids are in index position
+		const bBoxSimilarities = detections.map((bbox) => IoU(bbox, prevBbox));
+		ioUMatrix.push(bBoxSimilarities);
+	}
+
+	const associations = ioUMatrix.length > 0 ? munkres(ioUMatrix) : []; // 2d array there you go alex
+	let updatedTrackerIds = new Set();
+
+	// Handle existing trackers
+	for (const [trackerIndex, detectionsIndex] of associations) {
+		const newbbox = detections[detectionsIndex];
+		let trackerId = trackerIdToIndex[trackerIndex];
+		// if (newbbox) {
+			setMovingUp(newbbox, trackerId);
+			trackers.set(trackerId, newbbox);
+		updatedTrackerIds.add(trackerId);
+		// }
+		detections[detectionsIndex] = null;
+	}
+
+	// remove unmatched trackers
+	for (const id of trackers.keys()) {
+		if (!updatedTrackerIds.has(id)) {
+			trackers.delete(id);
+			consecutiveUpMovement.delete(id);
+			currentlyJumpingTrackers.delete(id);
+			// trackers.set(id, null);
+		}
+	}
+
+	// Add new trackers
+	detections.forEach((bbox) => {
+		if (bbox) {
+			trackers.set(MAXTRACKERID, bbox);
+			MAXTRACKERID += 1;
+		}
+	});
+
 }
 
 function setMovingUp(newbbox, trackerId) {
@@ -166,6 +180,7 @@ function setMovingUp(newbbox, trackerId) {
 			consecutiveUpMovement.set(trackerId, totalMovement);
 			if (totalMovement < JUMP_THRESHOLD && !currentlyJumpingTrackers.get(trackerId)) {
 				console.log(trackerId, 'JUMP!!')
+				console.log('trackers', Array.from(trackers.keys()));
 				currentlyJumpingTrackers.set(trackerId, true);
 			}
 		} else {
