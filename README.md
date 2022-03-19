@@ -16,4 +16,4 @@ It take a little while for the model to be pulled into the application before fa
 ## To Do
 * typescript
 * fix bug of double jump
-* make it an extention to play the dino jump game
+* make it an extension to play the dino jump game
