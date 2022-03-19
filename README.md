@@ -12,3 +12,8 @@ yarn start
 ```
 to run the server and the web app. 
 It take a little while for the model to be pulled into the application before face detection.
+
+## To Do
+* typescript
+* fix bug of double jump
+* make it an extention to play the dino jump game
