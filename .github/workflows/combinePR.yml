@@ -1,0 +1,26 @@
+name: Merge dependabot PR's to one HMR PR with ticket
+on:
+  schedule:
+    - cron: '0 12 * * 4'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  combineAndTicket:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GHA-combine-PRs
+        uses: vic1707/GHA-combine-PRs@1.2.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          branch-prefix: dependabot/
+          combine-branch-name: 'combine'
+          ignore-label: nocombine
+          must-be-green: true
+          always-recreate: false
+          min-prs: 1
+
+
+
