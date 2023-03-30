@@ -1,7 +1,7 @@
 name: Merge dependabot PR's to one HMR PR with ticket
 on:
   schedule:
-    - cron: '49 12 * * 4'
+    - cron: '53 10 * * 4'
 
 permissions:
   contents: write
