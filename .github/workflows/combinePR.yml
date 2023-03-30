@@ -16,8 +16,6 @@ jobs:
           branch-prefix: dependabot/npm_and_yarn
           combine-branch-name: 'combine'
           ignore-label: nocombine
-          must-be-green: true
-          always-recreate: false
           min-prs: 1
 
 
