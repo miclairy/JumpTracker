@@ -13,7 +13,7 @@ jobs:
         uses: vic1707/GHA-combine-PRs@1.1.0
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
-          branch-prefix: dependabot/
+          branch-prefix: dependabot/npm_and_yarn
           combine-branch-name: 'combine'
           ignore-label: nocombine
           must-be-green: true
