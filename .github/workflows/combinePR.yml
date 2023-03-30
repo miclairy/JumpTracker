@@ -1,8 +1,5 @@
 name: Merge dependabot PR's to one HMR PR with ticket
-on:
-  schedule:
-    - cron: '00 11 * * *'
-    - cron: '00 13 * * *'
+on: workflow_dispatch
 
 permissions:
   contents: write
