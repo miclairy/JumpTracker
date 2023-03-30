@@ -17,6 +17,7 @@ jobs:
           combine-branch-name: 'combine'
           ignore-label: nocombine
           must-be-green: false
+          min-prs: 1
 
 
 
