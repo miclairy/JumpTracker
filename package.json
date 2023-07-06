@@ -16,7 +16,7 @@
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.14.3",
-    "@babel/preset-env": "^7.14.4",
+    "@babel/preset-env": "^7.22.7",
     "@webpack-cli/generators": "^3.0.1",
     "babel-loader": "^8.2.2",
     "clean-webpack-plugin": "^4.0.0",
